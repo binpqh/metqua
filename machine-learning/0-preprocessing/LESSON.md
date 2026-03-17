@@ -98,6 +98,21 @@ X = np.array(ct.fit_transform(X))
 - `[0]` - chỉ số cột cần encode (cột đầu tiên)
 - `remainder='passthrough'` - giữ nguyên cột còn lại
 
+**Lưu ý quan trọng (drop một cột dummy)**:
+- Để tránh "dummy variable trap" (đa cộng tuyến) và một số ma trận suy biến, bạn nên bỏ 1 cột dummy khi dùng One-Hot. Ví dụ:
+```python
+  ct = ColumnTransformer(
+        transformers=[('encoder', OneHotEncoder(drop='first', handle_unknown='ignore'), [0])],
+        remainder='passthrough')
+
+  X = np.array(ct.fit_transform(X))
+```
+- Nếu bạn tự truyền `categories=[...]`, hãy chắc chắn thứ tự và các giá trị khớp chính xác với dữ liệu; nếu không, một số cột có thể toàn 0 vì mapping sai.
+- Ngoài ra có thể dùng pandas:
+```python
+  X = pd.get_dummies(X, columns=['Pclass','Sex','Embarked'], drop_first=True)
+```
+
 #### 3b. Encode cột output (Dependent Variable) - Label Encoding
 ```python
 from sklearn.preprocessing import LabelEncoder

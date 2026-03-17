@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 
-dataset = pd.read_csv("titanic.csv")
+dataset = pd.read_csv("machine-learning/0-preprocessing/titanic.csv")
 
 # X keeps PassengerId
 X = dataset.drop("Survived", axis=1)
