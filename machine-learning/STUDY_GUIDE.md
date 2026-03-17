@@ -1,5 +1,9 @@
 # ML Learning Guide (for .NET Backend Engineers)
 
+> **📚 Quick Links**:
+> - [EXERCISES.md](EXERCISES.md) - Bài tập cho từng topic + End-to-End Project
+> - [End-to-End Project](end-to-end-project/) - Customer Churn Prediction fullflow deployment
+
 ## Mindmap Overview
 ```mermaid
 mindmap
@@ -114,8 +118,69 @@ Mỗi LESSON.md bao gồm:
 - ✅ Tips cho .NET developers (deployment, API integration)
 - ✅ Bài tập thực hành
 
+## 🎯 Bài tập & Projects
+
+### Exercises (Practice cho từng topic)
+📝 **[EXERCISES.md](EXERCISES.md)** - Bài tập hands-on cho mỗi topic:
+
+1. **[Preprocessing Exercise](0-preprocessing/EXERCISE.md)** - Student Performance dataset
+2. **[Regression Exercise](1-regressions/EXERCISE.md)** - House Price Prediction
+3. More exercises coming for Classification, Clustering, NLP...
+
+Mỗi exercise có:
+- ✅ Đề bài với dataset
+- ✅ Approach/Solution chi tiết
+- ✅ Implementation guide từng bước
+- ✅ Complete code
+- ✅ Extension challenges
+
+### End-to-End Production Project
+🚀 **[Customer Churn Prediction](end-to-end-project/)**
+
+Fullflow từ data → train → evaluate → deploy → production:
+
+- **[README.md](end-to-end-project/README.md)** - Phases 1-3: Data, Training, Evaluation
+- **[DEPLOYMENT.md](end-to-end-project/DEPLOYMENT.md)** - Phases 4-6: Flask API, .NET Integration
+- **[PIPELINE.md](end-to-end-project/PIPELINE.md)** - Phases 7-9: Automation, Monitoring, Retraining
+
+**Features**:
+- 🔄 Full automation pipeline
+- 📊 Performance monitoring
+- 🔁 Auto-retraining on drift
+- 🐍↔️.NET Python API + .NET client integration
+- 🐳 Docker deployment
+- 📈 Complete logging & versioning
+
 ## Next Steps
-1. Đọc [0-preprocessing/LESSON.md](0-preprocessing/LESSON.md) → chạy code
-2. Tiếp tục theo thứ tự 1 → 10
-3. Mỗi bài: đọc lý thuyết → chạy .py → làm bài tập
-4. Persist model với `joblib` và tích hợp vào .NET service
+
+### Learning Path:
+
+**Beginner** (Học concepts):
+1. Đọc [0-preprocessing/LESSON.md](0-preprocessing/LESSON.md) → chạy code examples
+2. Làm [0-preprocessing/EXERCISE.md](0-preprocessing/EXERCISE.md)
+3. Tiếp tục topics 1 → 10 (LESSON.md → EXERCISE.md)
+
+**Intermediate** (Practice):
+1. Hoàn thành tất cả exercises trong [EXERCISES.md](EXERCISES.md)
+2. Thử extension challenges
+3. Đọc [End-to-End Project README](end-to-end-project/README.md) Phases 1-3
+
+**Production-Ready** (Build real systems):
+1. Implement [End-to-End Project](end-to-end-project/) đầy đủ 9 phases
+2. Deploy API với Docker ([DEPLOYMENT.md](end-to-end-project/DEPLOYMENT.md))
+3. Setup monitoring & retraining ([PIPELINE.md](end-to-end-project/PIPELINE.md))
+4. Integrate vào .NET application của bạn
+
+## Quick Start Commands
+
+```bash
+# Practice an exercise
+cd 0-preprocessing
+# Read EXERCISE.md, code your solution
+
+# Run end-to-end project
+cd end-to-end-project
+python -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+python run_pipeline.py  # Full automation!
+```
