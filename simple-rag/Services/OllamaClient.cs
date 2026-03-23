@@ -35,7 +35,7 @@ public class OllamaClient : IModelClient
         var request = new { model = _config.EmbeddingModel, prompt = text };
         try
         {
-            var response = await _httpClient.PostAsJsonAsync($"/embeddings/", request, _jsonOptions, cancellationToken);
+            var response = await _httpClient.PostAsJsonAsync($"{_config.BaseUrl}/embeddings/", request, _jsonOptions, cancellationToken);
             response.EnsureSuccessStatusCode();
 
             var resp = await response.Content.ReadFromJsonAsync<OllamaEmbedResponse>(_jsonOptions, cancellationToken);
@@ -68,7 +68,7 @@ public class OllamaClient : IModelClient
 
         try
         {
-            var response = await _httpClient.PostAsJsonAsync($"/chat/{_config.CompletionModel}", request, _jsonOptions, cancellationToken);
+            var response = await _httpClient.PostAsJsonAsync($"{_config.BaseUrl}/generate", request, _jsonOptions, cancellationToken);
             response.EnsureSuccessStatusCode();
 
             var resp = await response.Content.ReadFromJsonAsync<OllamaChatResponse>(_jsonOptions, cancellationToken);
