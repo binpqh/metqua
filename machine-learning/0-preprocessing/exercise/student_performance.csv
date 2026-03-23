@@ -1,0 +1,6 @@
+StudentID,Name,Gender,Age,StudyHours,PreviousScore,AttendanceRate,Passed
+1,Alice,Female,20,5.5,85,90,1
+2,Bob,Male,19,,75,80,1
+3,Charlie,Male,21,3.2,NaN,70,0
+4,Diana,Female,20,6.8,90,95,1
+5,Eve,Female,22,2.1,65,NaN,0
