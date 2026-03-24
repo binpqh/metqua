@@ -5,8 +5,8 @@
 - **Modified principles**: N/A (new document)
 - **Removed sections**: N/A
 - **Templates updated**:
-  - ✅ `.specify/memory/constitution.md` — written (this file)
-  - ✅ `.github/constitution.md` — written (user-requested location)
+  - ✅ `.specify/memory/constitution.md` — written (canonical source)
+  - ✅ `.github/constitution.md` — written (this file; user-requested location)
   - ⚠ `.specify/templates/plan-template.md` — Constitution Check gates now reference these 10 principles; generic structure preserved
   - ⚠ `.specify/templates/spec-template.md` — Installer/ENV PATH and AI-agent I/O now recognized as mandatory requirement sections per Principles III and IV
   - ⚠ `.specify/templates/tasks-template.md` — Task categories for observability, installer, sandbox testing, and versioning now align with Principles VI, III, V, X
@@ -18,6 +18,7 @@
 ## Core Principles
 
 ### I. Library-First Architecture
+
 Every discrete capability (session management, command dispatch, installer logic, AI agent I/O)
 MUST be implemented as an independently importable Go package under `internal/` or `pkg/`.
 No cross-package circular imports are permitted. Each package MUST expose a clean public API,
@@ -26,6 +27,7 @@ its single responsibility. Organizational-only packages (packages with no export
 prohibited.
 
 ### II. Idiomatic Go (NON-NEGOTIABLE)
+
 All code MUST conform to the Go Language Specification and `gofmt` / `goimports` formatting
 without exception. The following rules apply at all times:
 
@@ -42,17 +44,20 @@ without exception. The following rules apply at all times:
   long computation, or interacts with external systems.
 
 ### III. Cross-Platform Installer & ENV PATH Auto-Registration
+
 The project MUST ship a first-class installer for every supported platform. Installers are
 production artifacts equal in quality to the binary itself.
 
 **Windows**
+
 - Primary: NSIS-based `.exe` installer generated via CI.
 - Fallback: PowerShell install script (`install.ps1`) usable without admin rights via
   User-scope `PATH` registration in `HKCU\Environment`.
 - With elevation: Machine-scope `PATH` in `HKLM\SYSTEM\CurrentControlSet\Control\Session
-  Manager\Environment`, broadcast `WM_SETTINGCHANGE`.
+Manager\Environment`, broadcast `WM_SETTINGCHANGE`.
 
 **Linux**
+
 - Primary: Shell script (`install.sh`) that copies the binary to `/usr/local/bin` (with sudo)
   or `~/.local/bin` (without), then appends to `~/.bashrc`, `~/.zshrc`, and
   `~/.profile` as applicable.
@@ -61,6 +66,7 @@ production artifacts equal in quality to the binary itself.
 - Homebrew tap: `homebrew-simple-cli` tap with a formula for macOS and Linux.
 
 **macOS**
+
 - Primary: Homebrew formula via official tap (preferred distribution path).
 - Fallback: Shell script (`install.sh`) identical in logic to the Linux script, respecting
   `/usr/local/bin` on Intel and `/opt/homebrew/bin` on Apple Silicon.
@@ -70,6 +76,7 @@ production artifacts equal in quality to the binary itself.
   new shell after installation and report success or remediation steps on failure.
 
 ### IV. AI Agent Interoperability
+
 The CLI MUST be designed as a first-class participant in AI agent workflows.
 
 - Every command MUST support `--output json` (or `SIMPLE_CLI_OUTPUT=json`) to emit
@@ -85,12 +92,13 @@ The CLI MUST be designed as a first-class participant in AI agent workflows.
   on Linux/macOS, `%APPDATA%\simple-cli` on Windows) so agents can inspect it directly.
 
 ### V. Test-First (NON-NEGOTIABLE)
+
 Tests MUST be written before or alongside implementation — never after the fact.
 
 - **Unit tests**: Every exported function and every non-trivial unexported function MUST have
   a corresponding `_test.go` file in the same package. Table-driven tests are preferred.
 - **Integration tests**: Placed in `tests/integration/`; MUST exercise the CLI binary as a
-  black box (exec.Command) against a real or containerized environment.
+  black box (`exec.Command`) against a real or containerized environment.
 - **Sandbox / container tests**: A `tests/sandbox/` directory MUST contain Docker Compose
   definitions and test scripts that exercise installer behavior on clean OS images
   (Ubuntu, Debian, Alpine, Windows Server Core, macOS via CI runner).
@@ -100,6 +108,7 @@ Tests MUST be written before or alongside implementation — never after the fac
   `go test -run TestName`.
 
 ### VI. Observability & Structured Logging
+
 - The binary MUST expose a `--log-level` flag (values: `debug`, `info`, `warn`, `error`)
   defaulting to `info`; level MUST also be configurable via `SIMPLE_CLI_LOG_LEVEL`.
 - All log output MUST go to stderr, never stdout.
@@ -110,6 +119,7 @@ Tests MUST be written before or alongside implementation — never after the fac
   redaction helpers MUST be provided in `internal/security/`.
 
 ### VII. Documentation Standards
+
 - **Inline**: Every exported Go symbol MUST have a GoDoc comment. Complex algorithms MUST
   carry an explanatory comment block citing sources or rationale.
 - **Command help**: Every command and flag MUST have a non-empty `Short` and `Long`
@@ -125,16 +135,18 @@ Tests MUST be written before or alongside implementation — never after the fac
   without a linked issue are a constitution violation.
 
 ### VIII. Simplicity & Lightweight Binary
+
 - Binary size MUST remain under 20 MB after `ldflags="-s -w"` stripping.
 - Startup time (cold, no network) MUST remain under 150 ms on reference hardware
   (2-core VM, 2 GB RAM).
 - External dependencies MUST be justified: prefer standard library; add a direct dependency
   only if it saves > 100 lines of well-tested code or covers a security-sensitive surface.
 - `go.sum` MUST be committed; `vendor/` is optional but MUST be consistent if used.
-- The binary MUST be statically linked (CGO_ENABLED=0) for all release builds to ensure
+- The binary MUST be statically linked (`CGO_ENABLED=0`) for all release builds to ensure
   drop-in deployment.
 
 ### IX. Robustness & Error Resilience
+
 - All I/O operations (file, network, subprocess) MUST honor `context.Context` cancellation
   and deadlines; blocking calls without a context are a violation.
 - User-facing error messages MUST be actionable: describe what went wrong AND what the user
@@ -147,6 +159,7 @@ Tests MUST be written before or alongside implementation — never after the fac
   back to in-memory operation with an explicit warning.
 
 ### X. Versioning & Maintainability
+
 - Version follows Semantic Versioning 2.0.0 (SemVer). The version string MUST be injected
   at build time via `-ldflags "-X main.Version=$(git describe --tags)"`.
 - `CHANGELOG.md` MUST be updated with every release using Keep A Changelog format
@@ -169,6 +182,7 @@ Sub-commands follow the pattern `simple-cli <noun> <verb>` (e.g., `simple-cli se
 developer workflows (`make build`, `make test`, `make lint`, `make install-local`).
 
 **Installer toolchain**:
+
 - Windows: NSIS (`.exe`) + PowerShell script (`install.ps1`)
 - Linux: Shell script + `goreleaser` `.deb`/`.rpm` + `/etc/profile.d/` snippet
 - macOS: Homebrew formula + shell script + `pkgbuild` PKG
@@ -184,6 +198,7 @@ include `errcheck`, `govet`, `staticcheck`, `gosec`, `revive`, `gofumpt`.
 **CI/CD**: GitHub Actions; release pipeline triggered by semver tags (`v*.*.*`).
 
 **Configuration precedence** (highest to lowest):
+
 1. CLI flags
 2. Environment variables (`SIMPLE_CLI_*`)
 3. Config file (`$XDG_CONFIG_HOME/simple-cli/config.yaml`)
@@ -207,26 +222,28 @@ dist/
 ```
 
 All installers MUST:
+
 1. Place the binary in the OS-appropriate system or user bin directory.
 2. Register or verify ENV PATH so `simple-cli` is reachable in a new shell.
 3. Write an uninstaller / provide `simple-cli self uninstall` instructions.
 4. Be idempotent — running the installer twice MUST NOT create duplicate PATH entries.
 
 **Installation scripts** (`scripts/install/`):
+
 - `install.sh` — POSIX-compatible, works on Linux and macOS.
 - `install.ps1` — PowerShell 5.1+ compatible, works on Windows 7+ (no WinRM required).
 
 ## ENV PATH Registration Strategy
 
-| Platform | Scope | Method | Persistence |
-|---|---|---|---|
-| Windows (admin) | Machine | `HKLM\SYSTEM\...\Environment` via `setx /M` or registry API | Broadcast `WM_SETTINGCHANGE` |
-| Windows (user) | User | `HKCU\Environment` via `setx` | Immediate for new shells |
-| Linux (system) | All users | `/etc/profile.d/simple-cli.sh` (deb/rpm) | Next login shell |
-| Linux (user) | Current user | Append to `~/.bashrc` and `~/.zshrc` | Next shell spawn |
-| macOS (Homebrew) | Current user | Managed by Homebrew `bin/` symlink | Automatic |
-| macOS (PKG) | All users | `/etc/paths.d/simple-cli` | Next login shell |
-| macOS (user script) | Current user | Append to `~/.zshrc` (default shell) | Next shell spawn |
+| Platform            | Scope        | Method                                                      | Persistence                  |
+| ------------------- | ------------ | ----------------------------------------------------------- | ---------------------------- |
+| Windows (admin)     | Machine      | `HKLM\SYSTEM\...\Environment` via `setx /M` or registry API | Broadcast `WM_SETTINGCHANGE` |
+| Windows (user)      | User         | `HKCU\Environment` via `setx`                               | Immediate for new shells     |
+| Linux (system)      | All users    | `/etc/profile.d/simple-cli.sh` (deb/rpm)                    | Next login shell             |
+| Linux (user)        | Current user | Append to `~/.bashrc` and `~/.zshrc`                        | Next shell spawn             |
+| macOS (Homebrew)    | Current user | Managed by Homebrew `bin/` symlink                          | Automatic                    |
+| macOS (PKG)         | All users    | `/etc/paths.d/simple-cli`                                   | Next login shell             |
+| macOS (user script) | Current user | Append to `~/.zshrc` (default shell)                        | Next shell spawn             |
 
 Post-install validation: every installer MUST run `simple-cli --version` in a subprocess
 with a clean environment to confirm PATH registration succeeded, and print a human-readable
@@ -237,23 +254,38 @@ success or failure message with remediation guidance.
 Agents interacting with `simple-cli` MUST follow this contract:
 
 **Invocation pattern**:
+
 ```sh
 SIMPLE_CLI_OUTPUT=json simple-cli <command> [flags] 2>agent.err.jsonl
 ```
 
 **Stdout (success)**:
+
 ```json
 {"status": "ok", "data": { ... }, "meta": {"version": "1.2.3", "duration_ms": 42}}
 ```
 
 **Stdout (error)**:
+
 ```json
-{"status": "error", "code": "RESOURCE_NOT_FOUND", "message": "...", "hint": "..."}
+{
+  "status": "error",
+  "code": "RESOURCE_NOT_FOUND",
+  "message": "...",
+  "hint": "..."
+}
 ```
 
 **Stderr (progress, JSON-Lines)**:
+
 ```json
-{"level": "info", "time": "2026-03-23T10:00:00Z", "msg": "...", "step": 1, "total": 5}
+{
+  "level": "info",
+  "time": "2026-03-23T10:00:00Z",
+  "msg": "...",
+  "step": 1,
+  "total": 5
+}
 ```
 
 Agents MUST check the exit code first, then parse stdout JSON. The `code` field in error
@@ -290,6 +322,7 @@ for the simple-cli project. All contributors MUST read and acknowledge this docu
 making their first pull request.
 
 **Amendment procedure**:
+
 1. Open a GitHub Issue proposing the amendment with rationale.
 2. Discussion period: minimum 3 business days for input from maintainers.
 3. Amendment PR: updates this constitution AND all affected templates/docs in one atomic commit.

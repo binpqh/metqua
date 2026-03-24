@@ -1,0 +1,34 @@
+#!/bin/sh
+# postinstall — macOS PKG postinstall script.
+# Constitution Principle III: registers /usr/local/bin in /etc/paths.d/simple-cli
+# so simple-cli is on PATH immediately after install in any new shell.
+#
+# Called automatically by macOS installer framework after payload extraction.
+# Args injected by pkgbuild:
+#   $1 = package path
+#   $2 = target location
+#   $3 = target volume (e.g. /)
+
+set -e
+
+PATHS_FILE="/etc/paths.d/simple-cli"
+INSTALL_BIN="/usr/local/bin"
+
+# Idempotency: only write if the file doesn't already contain the path.
+if [ -f "$PATHS_FILE" ] && grep -qF "$INSTALL_BIN" "$PATHS_FILE" 2>/dev/null; then
+    echo "[postinstall] $INSTALL_BIN already registered in $PATHS_FILE — skipping" >&2
+    exit 0
+fi
+
+# /etc/paths.d entries must be a single absolute path per line.
+echo "$INSTALL_BIN" > "$PATHS_FILE"
+echo "[postinstall] Registered $INSTALL_BIN in $PATHS_FILE" >&2
+
+# Post-install validation.
+if PATH="${INSTALL_BIN}:${PATH}" simple-cli --version >/dev/null 2>&1; then
+    echo "[postinstall] ✓ simple-cli installed successfully" >&2
+else
+    echo "[postinstall] Warning: simple-cli --version failed. Open a new terminal and verify." >&2
+fi
+
+exit 0

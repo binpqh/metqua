@@ -1,0 +1,120 @@
+# .goreleaser.yml — Cross-platform release pipeline for simple-cli.
+# Constitution Principle III + VIII: static binaries for all platforms,
+# deb/rpm packages, NSIS installer, macOS PKG, SHA-256 checksums.
+#
+# Build: goreleaser release --clean
+# Local snapshot: goreleaser build --snapshot --clean
+
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+
+builds:
+  - id: simple-cli
+    main: ./main.go
+    binary: simple-cli
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    goarm: []
+    ignore:
+      # Windows ARM64 not yet supported for NSIS; raw binary only
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      - -s -w
+      - -X github.com/your-org/simple-cli/pkg/version.Version={{.Version}}
+      - -X github.com/your-org/simple-cli/pkg/version.Commit={{.Commit}}
+      - -X github.com/your-org/simple-cli/pkg/version.BuildDate={{.Date}}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+archives:
+  - id: unix
+    builds: [simple-cli]
+    format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+    name_template: >-
+      simple-cli_{{ .Os }}_{{ .Arch }}
+    files:
+      - README.md
+      - CHANGELOG.md
+      - docs/installation.md
+
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+# .deb and .rpm packages via nfpm
+nfpms:
+  - id: packages
+    package_name: simple-cli
+    vendor: your-org
+    homepage: https://github.com/your-org/simple-cli
+    maintainer: your-org <hello@your-org.dev>
+    description: Cross-platform CLI for managing long-life sessions.
+    license: MIT
+    formats:
+      - deb
+      - rpm
+    bindir: /usr/local/bin
+    contents:
+      - src: scripts/install/install.sh
+        dst: /usr/share/simple-cli/install.sh
+        type: doc
+    scripts:
+      postinstall: installer/linux/postinstall.sh
+    overrides:
+      deb:
+        dependencies:
+          - ca-certificates
+
+changelog:
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+  groups:
+    - title: "New Features"
+      regexp: "^feat"
+      order: 0
+    - title: "Bug Fixes"
+      regexp: "^fix"
+      order: 1
+    - title: "Other"
+      order: 999
+
+release:
+  github:
+    owner: your-org
+    name: simple-cli
+  extra_files:
+    - glob: "installer/windows/*.exe"
+      name_template: "simple-cli_windows_amd64_setup.exe"
+  draft: false
+  prerelease: auto
+
+brews:
+  - name: simple-cli
+    repository:
+      owner: your-org
+      name: homebrew-simple-cli
+    homepage: https://github.com/your-org/simple-cli
+    description: Cross-platform CLI for managing long-life sessions.
+    license: MIT
+    install: |
+      bin.install "simple-cli"
+    test: |
+      system "#{bin}/simple-cli", "--version"

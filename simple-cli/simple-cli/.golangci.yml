@@ -1,0 +1,53 @@
+# .golangci.yml — golangci-lint configuration
+# Required by Constitution Principle X: lint failures block merge.
+
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - gosec
+    - revive
+    - gofumpt
+    - misspell
+    - unused
+    - ineffassign
+    - bodyclose
+    - contextcheck
+    - noctx
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+  gosec:
+    excludes:
+      - G204 # subprocess via variable — intentional in integration tests
+  revive:
+    rules:
+      - name: exported
+        arguments: ["checkPrivateReceivers", "sayRepetitiveInsteadOfStutters"]
+      - name: error-return
+      - name: error-naming
+      - name: if-return
+      - name: var-naming
+  gofumpt:
+    extra-rules: true
+
+issues:
+  exclude-rules:
+    # Test files: allow longer functions, unexported helpers
+    - path: _test\.go
+      linters:
+        - errcheck
+        - gosec
+        - revive
+    # Generated / main entry: allow init() in cmd packages
+    - path: cmd/
+      linters:
+        - revive
+      text: "init"
