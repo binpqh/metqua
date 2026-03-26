@@ -1,4 +1,4 @@
-module github.com/your-org/simple-cli
+module github.com/binpqh/simple-cli
 
 go 1.25.0
 

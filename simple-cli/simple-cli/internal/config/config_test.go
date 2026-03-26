@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/your-org/simple-cli/internal/config"
+	"github.com/binpqh/simple-cli/internal/config"
 )
 
 func newViper() *viper.Viper {
@@ -25,7 +25,6 @@ func TestLoadDefaults(t *testing.T) {
 	assert.Equal(t, "info", cfg.LogLevel)
 	assert.False(t, cfg.NoColor)
 	assert.False(t, cfg.Quiet)
-	assert.NotEmpty(t, cfg.StateDir)
 }
 
 func TestLoadFromViper(t *testing.T) {
@@ -59,34 +58,6 @@ func TestLoadInvalidLogLevel(t *testing.T) {
 	assert.Contains(t, err.Error(), "invalid log_level")
 }
 
-func TestStateDirFromEnvXDG(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("XDG_STATE_HOME not used on Windows")
-	}
-	dir := t.TempDir()
-	t.Setenv("XDG_STATE_HOME", dir)
-	t.Setenv("APPDATA", "") // ensure APPDATA doesn't win
-
-	v := newViper()
-	cfg, err := config.Load(v)
-	require.NoError(t, err)
-	assert.Equal(t, filepath.Join(dir, "simple-cli"), cfg.StateDir)
-}
-
-func TestStateDirFallbackHomeDir(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("XDG fallback not used on Windows")
-	}
-	dir := t.TempDir()
-	t.Setenv("XDG_STATE_HOME", "")
-	t.Setenv("HOME", dir)
-
-	v := newViper()
-	cfg, err := config.Load(v)
-	require.NoError(t, err)
-	assert.Equal(t, filepath.Join(dir, ".local", "state", "simple-cli"), cfg.StateDir)
-}
-
 func TestConfigDirXDG(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("XDG config not used on Windows")
@@ -98,27 +69,24 @@ func TestConfigDirXDG(t *testing.T) {
 	assert.Equal(t, filepath.Join(dir, "simple-cli"), result)
 }
 
-func TestStateDirFromEnvAPPDATA(t *testing.T) {
+func TestConfigDirXDGFallback(t *testing.T) {
+	// Clear APPDATA so the Windows branch falls through to XDG check.
+	t.Setenv("APPDATA", "")
 	dir := t.TempDir()
-	t.Setenv("APPDATA", dir)
-	// Clear XDG so APPDATA wins on any OS when we fake-test it.
-	t.Setenv("XDG_STATE_HOME", "")
+	t.Setenv("XDG_CONFIG_HOME", dir)
 
-	v := newViper()
-	_ = v.BindEnv("state_dir", "APPDATA") // real win path would be set by OS
-	cfg, err := config.Load(v)
-	require.NoError(t, err)
-	assert.NotEmpty(t, cfg.StateDir)
+	result := config.ConfigDir()
+	assert.Equal(t, filepath.Join(dir, "simple-cli"), result)
 }
 
-func TestStateDirOverride(t *testing.T) {
-	dir := t.TempDir()
-	v := newViper()
-	v.Set("state_dir", dir)
+func TestConfigDirHomeFallback(t *testing.T) {
+	// Clear both APPDATA and XDG_CONFIG_HOME to exercise the home directory fallback.
+	t.Setenv("APPDATA", "")
+	t.Setenv("XDG_CONFIG_HOME", "")
 
-	cfg, err := config.Load(v)
-	require.NoError(t, err)
-	assert.Equal(t, dir, cfg.StateDir)
+	result := config.ConfigDir()
+	assert.NotEmpty(t, result)
+	assert.True(t, filepath.IsAbs(result), "ConfigDir fallback must return absolute path")
 }
 
 func TestConfigDirNotEmpty(t *testing.T) {
@@ -139,4 +107,62 @@ func TestLoadFromConfigFile(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "json", cfg.Output)
 	assert.Equal(t, "warn", cfg.LogLevel)
+}
+
+func TestProviderConfigUnmarshalAndActiveProvider(t *testing.T) {
+	v := newViper()
+	// Build providers map programmatically to avoid YAML parsing issues on CI
+	providers := map[string]interface{}{
+		"my-api": map[string]interface{}{
+			"client_id":       "id-123",
+			"device_endpoint": "https://auth.example.com/device",
+			"token_endpoint":  "https://auth.example.com/token",
+			"chat_endpoint":   "https://api.example.com/v1/chat/completions",
+			"scopes":          []string{"chat"},
+			"default_model":   "gpt-4o",
+		},
+		"other": map[string]interface{}{
+			"client_id":       "id-456",
+			"device_endpoint": "https://auth2.example.com/device",
+			"token_endpoint":  "https://auth2.example.com/token",
+			"chat_endpoint":   "https://api2.example.com/v1/chat/completions",
+			"scopes":          []string{},
+			"default_model":   "gpt-4o-mini",
+		},
+	}
+	v.Set("output", "json")
+	v.Set("default_provider", "my-api")
+	v.Set("providers", providers)
+
+	cfg, err := config.Load(v)
+	require.NoError(t, err)
+
+	// Providers unmarshalled
+	require.NotNil(t, cfg.Providers)
+	assert.Contains(t, cfg.Providers, "my-api")
+	assert.Contains(t, cfg.Providers, "other")
+
+	// ActiveProvider by name
+	pc, err := cfg.ActiveProvider("other")
+	require.NoError(t, err)
+	assert.Equal(t, "id-456", pc.ClientID)
+
+	// ActiveProvider fallback to default when name empty
+	def, err := cfg.ActiveProvider("")
+	require.NoError(t, err)
+	assert.Equal(t, "id-123", def.ClientID)
+}
+
+func TestActiveProviderErrors(t *testing.T) {
+	// Config with providers but no default_provider
+	v := newViper()
+	v.Set("providers.some", map[string]interface{}{"client_id": "x", "device_endpoint": "https://a", "token_endpoint": "https://b", "chat_endpoint": "https://c"})
+	cfg, err := config.Load(v)
+	require.NoError(t, err)
+
+	_, err = cfg.ActiveProvider("")
+	require.Error(t, err)
+
+	_, err = cfg.ActiveProvider("nonexistent")
+	require.Error(t, err)
 }

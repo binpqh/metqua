@@ -3,14 +3,14 @@
 # Constitution Principle III: installer MUST register ENV PATH and be idempotent.
 #
 # Usage:
-#   curl -fsSL https://github.com/your-org/simple-cli/releases/latest/download/install.sh | sh
+#   curl -fsSL https://github.com/binpqh/simple-cli/releases/latest/download/install.sh | sh
 #   # or with sudo for system-wide install:
 #   sudo sh install.sh
 
 set -e
 
 BINARY="simple-cli"
-REPO="your-org/simple-cli"
+REPO="binpqh/simple-cli"
 INSTALL_DIR_USER="${HOME}/.local/bin"
 INSTALL_DIR_SYSTEM="/usr/local/bin"
 

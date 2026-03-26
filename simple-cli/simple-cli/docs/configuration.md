@@ -15,7 +15,6 @@
 | `--no-color`    | `NO_COLOR`             | `no_color`      | bool   | `false`                                 | Suppress ANSI colour codes (honours the `NO_COLOR` standard) |
 | `--quiet`, `-q` | —                      | `quiet`         | bool   | `false`                                 | Suppress all informational output to stdout                  |
 | `--config`      | —                      | —               | string | See [Config File](#config-file)         | Explicit path to config file                                 |
-| —               | `SIMPLE_CLI_STATE_DIR` | `state_dir`     | string | See [State Directory](#state-directory) | Directory where session state is persisted                   |
 
 ---
 
@@ -38,22 +37,7 @@ output: json
 log_level: warn
 no_color: false
 quiet: false
-state_dir: /custom/state/dir
 ```
-
----
-
-## State Directory
-
-Long-life session data is persisted here. Default locations:
-
-| OS      | Default path                                                       |
-| ------- | ------------------------------------------------------------------ |
-| Linux   | `$XDG_STATE_HOME/simple-cli` (default `~/.local/state/simple-cli`) |
-| macOS   | `$XDG_STATE_HOME/simple-cli` (default `~/.local/state/simple-cli`) |
-| Windows | `%APPDATA%\simple-cli`                                             |
-
-Override via `SIMPLE_CLI_STATE_DIR` env var or `state_dir` config file key.
 
 ---
 
@@ -91,3 +75,72 @@ Given the following setup:
 - Flag: `--log-level info`
 
 **Result**: `log_level = info` (flag wins over env var over config file).
+
+---
+
+## Provider Configuration
+
+OAuth + AI chat providers are declared under the `providers:` key. The active provider is controlled by `default_provider`.
+
+### Config File Key Reference
+
+| Key under `providers.<name>` | Type       | Required | Description                                          |
+| ----------------------------- | ---------- | -------- | ---------------------------------------------------- |
+| `client_id`                   | string     | ✅       | OAuth 2.0 client ID registered with the provider    |
+| `device_endpoint`             | string     | ✅       | Device authorization URL (must be `https://`)        |
+| `token_endpoint`              | string     | ✅       | Token exchange URL (must be `https://`)              |
+| `chat_endpoint`               | string     | ✅       | OpenAI-compatible chat completions URL (`https://`)  |
+| `scopes`                      | string[]   | ❌       | OAuth scopes requested during device flow            |
+| `default_model`               | string     | ❌       | Model used when `--model` flag is omitted            |
+
+### Top-Level Provider Keys
+
+| Config Key          | Env Variable | Description                                         |
+| ------------------- | ------------ | --------------------------------------------------- |
+| `default_provider`  | —            | Name of the provider selected when `--provider` is omitted |
+
+### Per-Request Environment Variable Overrides
+
+These env vars override the active provider's config keys at runtime — useful for CI and scripting without modifying the config file.
+
+| Env Variable                       | Overrides field        |
+| ----------------------------------- | ---------------------- |
+| `SIMPLE_CLI_PROVIDER_CLIENT_ID`     | `client_id`            |
+| `SIMPLE_CLI_PROVIDER_DEVICE_ENDPOINT` | `device_endpoint`    |
+| `SIMPLE_CLI_PROVIDER_TOKEN_ENDPOINT`  | `token_endpoint`     |
+| `SIMPLE_CLI_PROVIDER_CHAT_ENDPOINT`   | `chat_endpoint`      |
+| `SIMPLE_CLI_PROVIDER_DEFAULT_MODEL`   | `default_model`      |
+
+### Example config.yaml with a provider
+
+```yaml
+output: human
+log_level: info
+default_provider: my-api
+providers:
+  my-api:
+    client_id: "your-client-id"
+    device_endpoint: "https://auth.example.com/device"
+    token_endpoint: "https://auth.example.com/token"
+    chat_endpoint: "https://api.example.com/v1/chat/completions"
+    scopes: ["chat", "offline_access"]
+    default_model: "gpt-4o"
+```
+
+### Token File
+
+Authenticated tokens are stored in `<config-dir>/tokens.json` (permissions `0600`, never committed — it is in `.gitignore`). The token file uses the following structure:
+
+```json
+{
+  "providers": {
+    "my-api": {
+      "provider":      "my-api",
+      "access_token":  "<redacted>",
+      "refresh_token": "<redacted>",
+      "expiry":        "2026-04-01T12:00:00Z"
+    }
+  }
+}
+```
+

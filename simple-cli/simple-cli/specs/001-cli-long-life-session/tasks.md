@@ -21,7 +21,7 @@
 **Purpose**: Initialize the Go module, directory layout, and tooling scaffolding that every subsequent phase depends on.
 
 - [x] T001 Create full project directory structure per plan.md: `cmd/session/`, `internal/config/`, `internal/output/`, `internal/security/`, `internal/session/`, `internal/signals/`, `pkg/version/`, `scripts/install/`, `installer/windows/`, `installer/macos/`, `tests/integration/`, `tests/sandbox/docker/`, `docs/`
-- [x] T002 Initialize `go.mod` (module `github.com/your-org/simple-cli`, Go 1.22) and run `go get` for primary dependencies: `github.com/spf13/cobra`, `github.com/spf13/viper`, `github.com/google/uuid`, `github.com/stretchr/testify`, `golang.org/x/sys` in `go.mod` / `go.sum`
+- [x] T002 Initialize `go.mod` (module `github.com/binpqh/simple-cli`, Go 1.22) and run `go get` for primary dependencies: `github.com/spf13/cobra`, `github.com/spf13/viper`, `github.com/google/uuid`, `github.com/stretchr/testify`, `golang.org/x/sys` in `go.mod` / `go.sum`
 - [x] T003 [P] Create `.golangci.yml` enabling `errcheck`, `gosec`, `revive`, `staticcheck`, `gofmt` linters with per-linter settings and `issues.exclude-rules` for test files in `.golangci.yml`
 - [x] T004 [P] Create `Makefile` skeleton defining `build`, `test`, `lint`, `install-local`, and `test-sandbox` phony targets with placeholder bodies in `Makefile`
 

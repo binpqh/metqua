@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/your-org/simple-cli/internal/signals"
+	"github.com/binpqh/simple-cli/internal/signals"
 )
 
 func TestNotifyContextCancelPropagates(t *testing.T) {

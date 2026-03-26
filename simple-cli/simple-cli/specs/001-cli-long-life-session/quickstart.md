@@ -24,7 +24,7 @@ brew install simple-cli
 ### Linux (install script)
 
 ```sh
-curl -fsSL https://github.com/your-org/simple-cli/releases/latest/download/install.sh | bash
+curl -fsSL https://github.com/binpqh/simple-cli/releases/latest/download/install.sh | bash
 ```
 
 This places the binary in `~/.local/bin` (or `/usr/local/bin` with sudo) and updates
@@ -33,7 +33,7 @@ your `~/.bashrc` and `~/.zshrc` automatically.
 ### Windows (PowerShell)
 
 ```powershell
-irm https://github.com/your-org/simple-cli/releases/latest/download/install.ps1 | iex
+irm https://github.com/binpqh/simple-cli/releases/latest/download/install.ps1 | iex
 ```
 
 This installs to `%LOCALAPPDATA%\simple-cli\bin` and registers it in your user `PATH`.
@@ -41,7 +41,7 @@ No administrator rights required.
 
 ### Windows (NSIS installer)
 
-Download `simple-cli_windows_amd64_setup.exe` from the [Releases page](https://github.com/your-org/simple-cli/releases)
+Download `simple-cli_windows_amd64_setup.exe` from the [Releases page](https://github.com/binpqh/simple-cli/releases)
 and run it. The installer adds `simple-cli` to your system PATH automatically.
 
 ---

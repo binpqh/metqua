@@ -9,6 +9,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [2.1.0] — feat: OAuth Device Flow + AI streaming chat
+
+> **Additive, no breaking changes.** All v2.0.0 behaviour is preserved.
+
+### Added
+
+**New commands:**
+- `auth login [--provider <name>]` — Device Authorization Flow (RFC 8628); prints verification URL + code; polls until approved; stores token
+- `auth status [--provider <name>]` — Shows current authentication state (authenticated, expired, time-until-expiry)
+- `auth logout [--provider <name>] [--all]` — Clears stored tokens (idempotent)
+- `chat [message] [flags]` — Streams AI chat response from OpenAI-compatible endpoint; supports `--model`, `--conversation`, `--system`; auto-refreshes expired tokens with one retry on 401
+
+**New packages:**
+- `internal/provider` — `ProviderAdapter`, `TokenStore`, `ChatBackend` interfaces; `TokenSet`, `DeviceFlowState`, `ChatRequest`, `StreamEvent` types; sentinel errors
+- `internal/auth` — `HTTPProviderAdapter` implementing RFC 8628 device flow, token polling and refresh
+- `internal/chat` — `SSEChatBackend` for OpenAI-compatible `text/event-stream` responses
+- `internal/tokenstore` — `FileTokenStore`: atomic JSON token persistence, `0600` permissions, corrupt-file recovery
+
+**Configuration:**
+- New `providers:` config key (see `docs/configuration.md`)
+- New `default_provider` config key
+- Per-request env overrides: `SIMPLE_CLI_PROVIDER_CLIENT_ID`, `SIMPLE_CLI_PROVIDER_DEVICE_ENDPOINT`, `SIMPLE_CLI_PROVIDER_TOKEN_ENDPOINT`, `SIMPLE_CLI_PROVIDER_CHAT_ENDPOINT`, `SIMPLE_CLI_PROVIDER_DEFAULT_MODEL`
+
+**Documentation:**
+- `docs/customization.md` — guide for adding sub-commands, provider adapters, and chat backends
+- `docs/configuration.md` — provider config key reference, token file location
+- `docs/ai-agent-guide.md` — `auth` and `chat` JSON envelope examples with `jq` recipes
+- `docs/architecture.md` — updated package diagram including new packages
+
+---
+
+## [2.0.0] — refactor: template + daemon
+
+> **Breaking change**: All `session` sub-commands have been removed. The CLI is now a generic
+> cross-platform template. The primary sub-command is `run`, which stays alive until the device
+> shuts down.
+
+### Removed
+
+- `session start`, `session resume`, `session list`, `session stop`, `session reset` sub-commands
+- `internal/session/` package (FileStore, MemStore, ProxyStore, FileLock)
+- `StateDir` config field and `SIMPLE_CLI_STATE_DIR` environment variable
+- Session state directory layout and cross-platform file locking
+
+### Added
+
+- `run` sub-command — long-running daemon that blocks on `SIGINT`/`SIGTERM` with 5 s graceful drain
+- `example` sub-command — minimal extension-pattern reference (safe to delete when customising)
+- Extension-point comment in `cmd/root.go` showing how to add new sub-commands
+- Template customisation instructions in `cmd/example_cmd.go`
+
+### Changed
+
+- Constitution amended to v2.0.0: "session management" replaced with "daemon/process lifecycle management"
+- `README.md`, `docs/quickstart.md`, `docs/architecture.md`, `docs/configuration.md`, `docs/ai-agent-guide.md` updated to reflect template/daemon focus
+- Integration tests rewritten to cover `run` daemon lifecycle and `example` JSON output
+
+---
+
 ### Added
 
 #### US1 — Install & Run First Command

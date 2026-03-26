@@ -7,7 +7,7 @@ Get up and running with **simple-cli** in under 5 minutes.
 ## Prerequisites
 
 - Go 1.22+ (only needed if building from source)
-- Or: download a pre-built binary from [GitHub Releases](https://github.com/your-org/simple-cli/releases)
+- Or: download a pre-built binary from [GitHub Releases](https://github.com/binpqh/simple-cli/releases)
 
 ---
 
@@ -16,24 +16,24 @@ Get up and running with **simple-cli** in under 5 minutes.
 ### Linux / macOS (shell installer)
 
 ```bash
-curl -sSL https://github.com/your-org/simple-cli/releases/latest/download/install.sh | bash
+curl -sSL https://github.com/binpqh/simple-cli/releases/latest/download/install.sh | bash
 ```
 
 ### macOS (Homebrew)
 
 ```bash
-brew install your-org/tap/simple-cli
+brew install binpqh/tap/simple-cli
 ```
 
 ### Windows (PowerShell)
 
 ```powershell
-irm https://github.com/your-org/simple-cli/releases/latest/download/install.ps1 | iex
+irm https://github.com/binpqh/simple-cli/releases/latest/download/install.ps1 | iex
 ```
 
 ### Windows (NSIS installer)
 
-Download `simple-cli-setup.exe` from the [Releases page](https://github.com/your-org/simple-cli/releases) and run it. The installer registers `simple-cli` on the system PATH automatically.
+Download `simple-cli-setup.exe` from the [Releases page](https://github.com/binpqh/simple-cli/releases) and run it. The installer registers `simple-cli` on the system PATH automatically.
 
 ---
 
@@ -48,70 +48,44 @@ simple-cli --version
 
 ---
 
-## Start Your First Session
+## Start the Daemon
 
 ```bash
-simple-cli session start --name my-project
-# Session 'my-project' started (id: 550e8400-...)
+simple-cli run
+# simple-cli started — waiting for shutdown signal (Ctrl+C or SIGTERM)
 ```
 
-Optional: let the name be auto-generated:
+The process blocks until it receives `SIGINT` or `SIGTERM` (e.g., `Ctrl+C`, `kill`, or system shutdown). It exits cleanly within 5 seconds.
+
+---
+
+## Using JSON Output
 
 ```bash
-simple-cli session start
-# Session 'bold-river' started (id: ...)
+simple-cli --output json run
+```
+
+On shutdown:
+
+```json
+{"status":"ok","data":{"status":"stopped","uptime_ms":5123},"meta":{"version":"1.0.0","duration_ms":5123,"command":"run"}}
 ```
 
 ---
 
-## List Sessions
+## Example Sub-Command
+
+The template ships with an example sub-command to demonstrate the extension pattern:
 
 ```bash
-simple-cli session list
-# ID         NAME                     STATUS     CREATED
-# 550e8400   my-project               active     2026-03-23T10:00:00Z
+simple-cli example
+# Replace this with your logic
+
+simple-cli --output json example
+# {"status":"ok","data":{"message":"replace this with your logic"},"meta":{...}}
 ```
 
----
-
-## Close Terminal and Resume
-
-Close your terminal window, then open a new one:
-
-```bash
-simple-cli session resume --name my-project
-# Resumed session 'my-project'
-```
-
-Your session state is exactly where you left it.
-
----
-
-## Stop a Session
-
-```bash
-simple-cli session stop --name my-project
-# Session 'my-project' stopped
-```
-
----
-
-## Reset a Session
-
-Deletes the session and starts a fresh one with the same name:
-
-```bash
-simple-cli session reset --name my-project --force
-# Session 'my-project' reset (new id: ...)
-```
-
-Without `--force`, you will be prompted to confirm:
-
-```bash
-simple-cli session reset --name my-project
-# Reset session 'my-project'? All state will be lost. [y/N] y
-# Session 'my-project' reset (new id: ...)
-```
+Delete `cmd/example_cmd.go` and add your own commands when customising the template.
 
 ---
 
@@ -122,22 +96,9 @@ Perfect for scripting or AI agent tool-use:
 ```bash
 export SIMPLE_CLI_OUTPUT=json
 
-simple-cli session start --name agent-workflow
-# {"status":"ok","data":{"id":"...","name":"agent-workflow","status":"active",...},"meta":{...}}
-
-simple-cli session list
-# {"status":"ok","data":{"sessions":[...],"total":1},"meta":{...}}
-
-simple-cli session stop --name agent-workflow
-# {"status":"ok","data":{"id":"...","status":"stopped",...},"meta":{...}}
-```
-
-Errors write JSON to stderr:
-
-```bash
-simple-cli session resume --name no-such-session 2>&1 | cat
-# {"status":"error","code":"SESSION_NOT_FOUND","message":"...","hint":"...","meta":{...}}
-echo $?  # 3
+simple-cli run
+# blocks; on shutdown:
+# {"status":"ok","data":{"status":"stopped","uptime_ms":5123},"meta":{...}}
 ```
 
 See [docs/ai-agent-guide.md](ai-agent-guide.md) for full schema documentation and code examples.
@@ -151,6 +112,5 @@ See [docs/ai-agent-guide.md](ai-agent-guide.md) for full schema documentation an
 | `SIMPLE_CLI_OUTPUT`    | `human` | `json` for machine-readable output       |
 | `SIMPLE_CLI_LOG_LEVEL` | `info`  | `debug`, `info`, `warn`, `error`         |
 | `NO_COLOR`             | (unset) | Any non-empty value disables ANSI colour |
-| `SIMPLE_CLI_STATE_DIR` | (auto)  | Override the session state directory     |
 
 See [docs/configuration.md](configuration.md) for the full reference.

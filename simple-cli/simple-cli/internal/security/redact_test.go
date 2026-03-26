@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/your-org/simple-cli/internal/security"
+	"github.com/binpqh/simple-cli/internal/security"
 )
 
 func TestRedactSensitiveKeys(t *testing.T) {

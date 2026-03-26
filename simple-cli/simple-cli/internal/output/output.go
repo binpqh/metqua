@@ -9,8 +9,8 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/your-org/simple-cli/internal/exitcode"
-	"github.com/your-org/simple-cli/pkg/version"
+	"github.com/binpqh/simple-cli/internal/exitcode"
+	"github.com/binpqh/simple-cli/pkg/version"
 )
 
 // ansiRe matches ANSI escape sequences for stripping in --no-color mode.

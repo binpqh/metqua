@@ -1,16 +1,23 @@
 <!--
 ## Sync Impact Report
-- **Version change**: N/A (initial) → 1.0.0
-- **Added sections**: All sections — initial constitution for simple-cli
-- **Modified principles**: N/A (new document)
-- **Removed sections**: N/A
+- **Version change**: 1.0.0 → 2.0.0
+- **Modified principles**:
+  - Principle I: "Library-First Architecture" — removed "session management" from capability list;
+    added "daemon/process lifecycle management" as a first-class capability.
+  - Principle IV: "AI Agent Interoperability" — removed session-state persistence bullet;
+    added template extensibility guidance.
+  - Principle IX: "Robustness & Error Resilience" — replaced "Long-running session commands"
+    with "The bundled `run` daemon command" to reflect new project focus.
+- **Added sections**: None
+- **Removed sections**: None (session concept retired from governance; no dedicated section existed)
 - **Templates updated**:
-  - ✅ `.specify/memory/constitution.md` — written (canonical source)
-  - ✅ `.github/constitution.md` — written (this file; user-requested location)
-  - ⚠ `.specify/templates/plan-template.md` — Constitution Check gates now reference these 10 principles; generic structure preserved
-  - ⚠ `.specify/templates/spec-template.md` — Installer/ENV PATH and AI-agent I/O now recognized as mandatory requirement sections per Principles III and IV
-  - ⚠ `.specify/templates/tasks-template.md` — Task categories for observability, installer, sandbox testing, and versioning now align with Principles VI, III, V, X
-- **Follow-up TODOs**: None — all fields resolved from user input and project context
+  - ✅ `.specify/memory/constitution.md` — updated (canonical source)
+  - ✅ `.github/constitution.md` — updated (this file; mirror copy)
+  - ✅ `.specify/templates/plan-template.md` — verified; no session-specific gates; no update needed
+  - ✅ `.specify/templates/spec-template.md` — verified; generic; no update needed
+  - ✅ `.specify/templates/tasks-template.md` — verified; generic; no update needed
+  - ✅ Technology Stack section — updated sub-command pattern example
+- **Follow-up TODOs**: None — all fields resolved
 -->
 
 # simple-cli Constitution
@@ -19,8 +26,9 @@
 
 ### I. Library-First Architecture
 
-Every discrete capability (session management, command dispatch, installer logic, AI agent I/O)
-MUST be implemented as an independently importable Go package under `internal/` or `pkg/`.
+Every discrete capability (daemon/process lifecycle management, command dispatch, installer logic,
+AI agent I/O) MUST be implemented as an independently importable Go package under `internal/` or
+`pkg/`. New domain capabilities added when customising the template follow the same rule.
 No cross-package circular imports are permitted. Each package MUST expose a clean public API,
 be independently testable with no global state, and carry a package-level doc comment explaining
 its single responsibility. Organizational-only packages (packages with no exported symbols) are
@@ -86,10 +94,11 @@ The CLI MUST be designed as a first-class participant in AI agent workflows.
   `2` misuse/invalid args, `3` resource not found, `4` permission denied, `5` timeout.
 - A `--no-color` / `NO_COLOR=1` flag MUST suppress all ANSI escape codes.
 - A `--quiet` flag MUST suppress all informational output, leaving only data on stdout.
-- Long-running commands MUST emit progress to stderr as JSON-Lines when
+- Long-running progress MUST be emitted to stderr as JSON-Lines when
   `SIMPLE_CLI_OUTPUT=json`, enabling agent log parsing without stdout pollution.
-- Session state MUST be persisted in a well-documented location (`$XDG_STATE_HOME/simple-cli`
-  on Linux/macOS, `%APPDATA%\simple-cli` on Windows) so agents can inspect it directly.
+- This project is a **customisable template**. Adding a new sub-command constitutes a new
+  "capability" for the purposes of Principle I; each new command MUST be independently
+  importable, testable, and documented before merging.
 
 ### V. Test-First (NON-NEGOTIABLE)
 
@@ -151,8 +160,9 @@ Tests MUST be written before or alongside implementation — never after the fac
   and deadlines; blocking calls without a context are a violation.
 - User-facing error messages MUST be actionable: describe what went wrong AND what the user
   can do to fix it.
-- Long-running session commands MUST implement graceful shutdown on SIGINT/SIGTERM:
-  flush state, release locks, and exit cleanly within 5 seconds.
+- The bundled `run` daemon command MUST implement graceful shutdown on SIGINT/SIGTERM:
+  drain in-flight work and exit cleanly within 5 seconds (enforced by `internal/signals`).
+  Custom commands added to the template MUST follow the same shutdown contract.
 - Configuration parsing errors MUST be reported with the offending file path and line number
   where possible.
 - The CLI MUST handle read-only filesystems and missing HOME/APPDATA gracefully, falling
@@ -176,7 +186,9 @@ Tests MUST be written before or alongside implementation — never after the fac
 **Runtime**: Go 1.22+ (minimum); CI MUST test on the current stable and previous stable release.
 
 **CLI Framework**: `github.com/spf13/cobra` with `github.com/spf13/viper` for configuration.
-Sub-commands follow the pattern `simple-cli <noun> <verb>` (e.g., `simple-cli session start`).
+This project is a **template**: the bundled sub-command is `simple-cli run` (long-running daemon).
+Consumers MUST add their own sub-commands following the pattern `simple-cli <verb>` or
+`simple-cli <noun> <verb>` and register them in `cmd/root.go`.
 
 **Build**: `goreleaser` for cross-platform binary and package artifacts; `Makefile` for
 developer workflows (`make build`, `make test`, `make lint`, `make install-local`).
@@ -338,7 +350,7 @@ Reviewers MUST reject PRs that bypass this check without explicit maintainer sig
 violate Principle VIII (Simplicity), the complexity MUST be justified in a `COMPLEXITY.md`
 file at repository root and linked from this constitution.
 
-**Runtime guidance**: `.github/agents/speckit.implement.agent.md` provides per-session
+**Runtime guidance**: `.github/agents/speckit.implement.agent.md` provides per-feature
 development guidance aligned with this constitution.
 
-**Version**: 1.0.0 | **Ratified**: 2026-03-23 | **Last Amended**: 2026-03-23
+**Version**: 2.0.0 | **Ratified**: 2026-03-23 | **Last Amended**: 2026-03-24

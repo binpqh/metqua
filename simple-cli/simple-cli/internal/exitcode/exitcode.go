@@ -5,12 +5,12 @@ package exitcode
 
 // Exit code constants matching contracts/exit-codes.md.
 const (
-	Success         = 0
-	GeneralError    = 1
-	InvalidArgument = 2
-	NotFound        = 3
+	Success          = 0
+	GeneralError     = 1
+	InvalidArgument  = 2
+	NotFound         = 3
 	PermissionDenied = 4
-	Timeout         = 5
+	Timeout          = 5
 )
 
 // ExitError is a sentinel error that carries a process exit code.

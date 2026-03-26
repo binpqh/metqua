@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/your-org/simple-cli/internal/output"
+	"github.com/binpqh/simple-cli/internal/output"
 )
 
 func newTestWriter(quiet bool) (*output.Writer, *bytes.Buffer, *bytes.Buffer) {

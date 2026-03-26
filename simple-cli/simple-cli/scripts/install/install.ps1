@@ -16,7 +16,7 @@
 
 .EXAMPLE
     # User install (no elevation required):
-    irm https://github.com/your-org/simple-cli/releases/latest/download/install.ps1 | iex
+    irm https://github.com/binpqh/simple-cli/releases/latest/download/install.ps1 | iex
 
     # Machine-wide install (run as Administrator):
     irm https://...install.ps1 | iex
@@ -25,7 +25,7 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$Repo    = 'your-org/simple-cli'
+$Repo    = 'binpqh/simple-cli'
 $Binary  = 'simple-cli.exe'
 
 # ──────────────────────────────────────────────

@@ -3,7 +3,7 @@
 
 BINARY     := simple-cli
 DIST_DIR   := dist
-MODULE     := github.com/your-org/simple-cli
+MODULE     := github.com/binpqh/simple-cli
 VERSION    ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 COMMIT     ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_DATE ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo "unknown")
@@ -23,7 +23,7 @@ all: build
 ## build: Compile static binary to dist/
 build:
 	@mkdir -p $(DIST_DIR)
-	CGO_ENABLED=0 go build -ldflags="$(LDFLAGS)" -o $(DIST_DIR)/$(BINARY) ./cmd/...
+	CGO_ENABLED=0 go build -ldflags="$(LDFLAGS)" -o $(DIST_DIR)/$(BINARY) .
 
 ## test: Run all unit + integration tests and enforce ≥80% coverage
 test:

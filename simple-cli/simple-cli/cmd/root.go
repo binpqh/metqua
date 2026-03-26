@@ -12,38 +12,34 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	sessioncmd "github.com/your-org/simple-cli/cmd/session"
-	"github.com/your-org/simple-cli/internal/config"
-	"github.com/your-org/simple-cli/internal/exitcode"
-	"github.com/your-org/simple-cli/internal/session"
-	"github.com/your-org/simple-cli/pkg/version"
+	authcmd "github.com/binpqh/simple-cli/cmd/auth"
+	"github.com/binpqh/simple-cli/internal/config"
+	"github.com/binpqh/simple-cli/internal/exitcode"
+	"github.com/binpqh/simple-cli/pkg/version"
 )
 
 var (
 	cfgFile string
 	v       = viper.New()
 	cfg     *config.Config
-
-	// sessionStore is created once during Execute and shared across commands.
-	sessionStore session.SessionStore
 )
 
 // rootCmd is the base command. Every sub-command is added as a child.
 var rootCmd = &cobra.Command{
 	Use:   "simple-cli",
-	Short: "A cross-platform CLI for managing long-life sessions",
-	Long: `simple-cli maintains persistent sessions across terminal restarts.
-Sessions survive shell closes and can be resumed at any time.
+	Short: "A cross-platform CLI template",
+	Long: `simple-cli is a cross-platform CLI template that stays alive as a
+long-running process until the device shuts down.
+
+Customise it by adding sub-commands in cmd/ and implementing your logic
+inside internal/.
 
 Use --output json for machine-readable output suitable for AI agent workflows.`,
-	Example: `  # Start a new session
-  simple-cli session start --name my-project
+	Example: `  # Start the long-running process
+  simple-cli run
 
-  # Resume after terminal restart
-  simple-cli session resume --name my-project
-
-  # List all sessions in JSON mode (for AI agents)
-  simple-cli --output json session list`,
+  # Run with JSON output (for AI agents / scripts)
+  simple-cli --output json run`,
 
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		// Load config file if one was specified or auto-discovered.
@@ -62,7 +58,6 @@ Use --output json for machine-readable output suitable for AI agent workflows.`,
 		_ = v.BindEnv("output", "SIMPLE_CLI_OUTPUT")
 		_ = v.BindEnv("log_level", "SIMPLE_CLI_LOG_LEVEL")
 		_ = v.BindEnv("no_color", "NO_COLOR")
-		_ = v.BindEnv("state_dir", "SIMPLE_CLI_STATE_DIR")
 		v.AutomaticEnv()
 
 		// Bind persistent flags into Viper.
@@ -101,17 +96,6 @@ Use --output json for machine-readable output suitable for AI agent workflows.`,
 		// Store resolved config in context so sub-commands can read it.
 		cmd.SetContext(context.WithValue(cmd.Context(), config.CtxKey{}, cfg))
 
-		// Initialise the session store once (idempotent on subsequent calls).
-		if sessionStore == nil {
-			fs, err := session.NewFileStore(cfg.StateDir)
-			if err != nil {
-				slog.Warn("falling back to in-memory session store", "err", err)
-				sessionStore = session.NewMemStore()
-			} else {
-				sessionStore = fs
-			}
-		}
-
 		return nil
 	},
 }
@@ -141,8 +125,11 @@ func init() {
 	rootCmd.Version = version.String()
 	rootCmd.SetVersionTemplate("{{.Version}}\n")
 
-	// sessionStore is nil until PersistentPreRunE runs, so we pass a proxy
-	// store that delegates to the real store at runtime.
-	proxy := session.NewProxyStore(&sessionStore)
-	rootCmd.AddCommand(sessioncmd.NewSessionCmd(proxy))
+	// To add a new sub-command, create cmd/mycommand.go with a newMyCmd() constructor
+	// following the same pattern as cmd/run.go, then register it here:
+	//   rootCmd.AddCommand(newMyCmd())
+	rootCmd.AddCommand(newRunCmd())
+	rootCmd.AddCommand(newExampleCmd())
+	rootCmd.AddCommand(authcmd.NewAuthCmd())
+	rootCmd.AddCommand(newChatCmd())
 }

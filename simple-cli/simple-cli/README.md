@@ -2,10 +2,10 @@
 
 [![Go](https://img.shields.io/badge/Go-1.22%2B-blue?logo=go)](https://go.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)](https://github.com/your-org/simple-cli/releases)
+[![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)](https://github.com/binpqh/simple-cli/releases)
 
-A cross-platform CLI for managing **long-life sessions** that survive terminal restarts.
-Designed for developers and AI agent workflows.
+A **cross-platform CLI template** that stays alive as a long-running process until the device shuts down.
+Designed to be customised into any CLI application, with built-in support for AI agent workflows.
 
 ---
 
@@ -13,31 +13,31 @@ Designed for developers and AI agent workflows.
 
 ```bash
 # Linux / macOS
-curl -sSL https://github.com/your-org/simple-cli/releases/latest/download/install.sh | bash
+curl -sSL https://github.com/binpqh/simple-cli/releases/latest/download/install.sh | bash
 
 # macOS (Homebrew)
-brew install your-org/tap/simple-cli
+brew install binpqh/tap/simple-cli
 
 # Windows (PowerShell)
-irm https://github.com/your-org/simple-cli/releases/latest/download/install.ps1 | iex
+irm https://github.com/binpqh/simple-cli/releases/latest/download/install.ps1 | iex
 ```
 
 Verify: `simple-cli --version`
 
 ---
 
-## 3-Command Quick Start
+## Quick Start
 
 ```bash
-# 1. Start a session
-simple-cli session start --name my-project
+# Start the long-running daemon (blocks until shutdown signal)
+simple-cli run
 
-# 2. Close your terminal, reopen it, then resume
-simple-cli session resume --name my-project
-
-# 3. Stop when done
-simple-cli session stop --name my-project
+# Run with JSON output for AI agents / scripts
+simple-cli --output json run
+# {"status":"ok","data":{"status":"stopped","uptime_ms":5123},"meta":{...}}
 ```
+
+Stop with `Ctrl+C` or `SIGTERM`. The process exits cleanly within 5 seconds.
 
 ---
 
@@ -45,24 +45,20 @@ simple-cli session stop --name my-project
 
 | Feature                       | Description                                                                  |
 | ----------------------------- | ---------------------------------------------------------------------------- |
-| **Session persistence**       | Sessions survive terminal restarts via file-backed storage                   |
+| **Daemon lifecycle**          | `run` command blocks until SIGINT/SIGTERM — survives until device shutdown   |
+| **Template extensibility**    | Add sub-commands in `cmd/`, implement logic in `internal/`                   |
 | **Cross-platform**            | Linux, macOS, Windows — single static binary, no runtime dependencies        |
 | **AI agent JSON output**      | `--output json` (or `SIMPLE_CLI_OUTPUT=json`) produces stable JSON envelopes |
 | **Structured exit codes**     | Deterministic exit codes for scripting and error handling                    |
 | **Cross-platform installers** | Shell, PowerShell, NSIS, PKG — PATH registered automatically                 |
-| **Session lifecycle**         | `start`, `resume`, `list`, `stop`, `reset`                                   |
-| **Concurrent-safe**           | File locking (flock / LockFileEx) prevents data corruption                   |
 
 ---
 
 ## Commands
 
 ```
-simple-cli session start   [--name <name>]
-simple-cli session resume  [--name <name> | --id <id>]
-simple-cli session list    [--status active|paused|stopped]
-simple-cli session stop    [--name <name> | --id <id>]
-simple-cli session reset   [--name <name> | --id <id>] [--force]
+simple-cli run      # Start the long-running daemon process
+simple-cli example  # Example sub-command (safe to delete when customising)
 ```
 
 Global flags: `--output {human|json}`, `--log-level {debug|info|warn|error}`, `--no-color`, `--quiet`
@@ -73,11 +69,12 @@ Global flags: `--output {human|json}`, `--log-level {debug|info|warn|error}`, `-
 
 ```bash
 export SIMPLE_CLI_OUTPUT=json
-simple-cli session start --name workflow
-# {"status":"ok","data":{"id":"...","name":"workflow","status":"active",...},...}
+simple-cli run
+# blocks; on shutdown:
+# {"status":"ok","data":{"status":"stopped","uptime_ms":12345},"meta":{"command":"run",...}}
 ```
 
-Exit codes: `0` success, `2` invalid args, `3` not found, `4` permission denied, `5` timeout.
+Exit codes: `0` success, `1` general error, `2` invalid args.
 
 See [docs/ai-agent-guide.md](docs/ai-agent-guide.md) for full examples in Bash, PowerShell, and Python.
 

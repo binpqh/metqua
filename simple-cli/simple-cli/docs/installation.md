@@ -22,14 +22,14 @@ simple-cli --version
 ### Shell Script (fallback)
 
 ```sh
-curl -fsSL https://github.com/your-org/simple-cli/releases/latest/download/install.sh | sh
+curl -fsSL https://github.com/binpqh/simple-cli/releases/latest/download/install.sh | sh
 ```
 
 Installs to `~/.local/bin` and appends to `~/.zshrc`. Open a new terminal to apply.
 
 ### PKG Installer (enterprise / MDM)
 
-Download `simple-cli_darwin_universal.pkg` from the [Releases page](https://github.com/your-org/simple-cli/releases)
+Download `simple-cli_darwin_universal.pkg` from the [Releases page](https://github.com/binpqh/simple-cli/releases)
 and double-click it. The postinstall script writes `/etc/paths.d/simple-cli`.
 
 ---
@@ -39,7 +39,7 @@ and double-click it. The postinstall script writes `/etc/paths.d/simple-cli`.
 ### Shell Script (recommended)
 
 ```sh
-curl -fsSL https://github.com/your-org/simple-cli/releases/latest/download/install.sh | sh
+curl -fsSL https://github.com/binpqh/simple-cli/releases/latest/download/install.sh | sh
 ```
 
 Installs to `~/.local/bin` (or `/usr/local/bin` with sudo) and appends to `~/.bashrc` and `~/.zshrc`.
@@ -47,7 +47,7 @@ Installs to `~/.local/bin` (or `/usr/local/bin` with sudo) and appends to `~/.ba
 ### .deb Package (Debian/Ubuntu)
 
 ```sh
-curl -fsSL https://github.com/your-org/simple-cli/releases/latest/download/simple-cli_linux_amd64.deb \
+curl -fsSL https://github.com/binpqh/simple-cli/releases/latest/download/simple-cli_linux_amd64.deb \
      -o simple-cli.deb
 sudo dpkg -i simple-cli.deb
 ```
@@ -55,7 +55,7 @@ sudo dpkg -i simple-cli.deb
 ### .rpm Package (Fedora/RHEL/Rocky)
 
 ```sh
-sudo rpm -i https://github.com/your-org/simple-cli/releases/latest/download/simple-cli_linux_amd64.rpm
+sudo rpm -i https://github.com/binpqh/simple-cli/releases/latest/download/simple-cli_linux_amd64.rpm
 ```
 
 Both packages install to `/usr/local/bin` and register `/etc/profile.d/simple-cli.sh`.
@@ -67,7 +67,7 @@ Both packages install to `/usr/local/bin` and register `/etc/profile.d/simple-cl
 ### PowerShell (recommended, no elevation required)
 
 ```powershell
-irm https://github.com/your-org/simple-cli/releases/latest/download/install.ps1 | iex
+irm https://github.com/binpqh/simple-cli/releases/latest/download/install.ps1 | iex
 ```
 
 Installs to `%LOCALAPPDATA%\simple-cli\bin` and registers user-scope PATH.
@@ -75,7 +75,7 @@ Open a new PowerShell session to apply.
 
 ### NSIS Installer (GUI or enterprise push)
 
-Download `simple-cli_windows_amd64_setup.exe` from the [Releases page](https://github.com/your-org/simple-cli/releases)
+Download `simple-cli_windows_amd64_setup.exe` from the [Releases page](https://github.com/binpqh/simple-cli/releases)
 and run it. The installer registers machine-scope PATH via the Windows Registry.
 
 ---

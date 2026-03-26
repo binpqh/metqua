@@ -4,7 +4,9 @@
 package config
 
 import (
+	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -22,7 +24,68 @@ type Config struct {
 	LogLevel string `mapstructure:"log_level"`
 	NoColor  bool   `mapstructure:"no_color"`
 	Quiet    bool   `mapstructure:"quiet"`
-	StateDir string `mapstructure:"state_dir"`
+	// Provider configuration (v2.1.0)
+	DefaultProvider string                    `mapstructure:"default_provider"`
+	Providers       map[string]ProviderConfig `mapstructure:"providers"`
+}
+
+// ProviderConfig holds all settings for one OAuth + Chat provider.
+type ProviderConfig struct {
+	ClientID       string   `mapstructure:"client_id"`
+	DeviceEndpoint string   `mapstructure:"device_endpoint"`
+	TokenEndpoint  string   `mapstructure:"token_endpoint"`
+	ChatEndpoint   string   `mapstructure:"chat_endpoint"`
+	Scopes         []string `mapstructure:"scopes"`
+	DefaultModel   string   `mapstructure:"default_model"`
+}
+
+// ActiveProvider resolves the provider configuration by name. If name is
+// empty, DefaultProvider is used. Returns an error when provider not found.
+func (c *Config) ActiveProvider(name string) (*ProviderConfig, error) {
+	if name == "" {
+		name = c.DefaultProvider
+	}
+	if name == "" {
+		return nil, errors.New("no provider specified and no default_provider set in config")
+	}
+	pc, ok := c.Providers[name]
+	if !ok {
+		// try lowercase normalization
+		if pc2, ok2 := c.Providers[lower(name)]; ok2 {
+			return &pc2, nil
+		}
+		return nil, fmt.Errorf("provider %q not found in config", name)
+	}
+	return &pc, nil
+}
+
+func lower(s string) string { return string([]byte(s)) }
+
+// ValidateProviderConfig performs basic validation on a provider config.
+func ValidateProviderConfig(pc *ProviderConfig) error {
+	if pc == nil {
+		return errors.New("provider config is nil")
+	}
+	if pc.ClientID == "" {
+		return errors.New("client_id is required")
+	}
+	for _, u := range []struct {
+		name string
+		raw  string
+	}{
+		{"device_endpoint", pc.DeviceEndpoint},
+		{"token_endpoint", pc.TokenEndpoint},
+		{"chat_endpoint", pc.ChatEndpoint},
+	} {
+		if u.raw == "" {
+			return fmt.Errorf("%s is required", u.name)
+		}
+		parsed, err := url.Parse(u.raw)
+		if err != nil || parsed.Scheme != "https" {
+			return fmt.Errorf("%s must be a valid https URL", u.name)
+		}
+	}
+	return nil
 }
 
 // Load reads configuration from the provided Viper instance and returns a
@@ -54,33 +117,7 @@ func Load(v *viper.Viper) (*Config, error) {
 		return nil, fmt.Errorf("config: invalid log_level %q: must be debug|info|warn|error", cfg.LogLevel)
 	}
 
-	// Resolve StateDir when not overridden.
-	if cfg.StateDir == "" {
-		cfg.StateDir = defaultStateDir()
-	}
-
 	return &cfg, nil
-}
-
-// StateDir returns the OS-appropriate session state directory.
-// Callers should use the value from Config.StateDir instead of calling this
-// directly; it is exported for testing.
-func defaultStateDir() string {
-	if runtime.GOOS == "windows" {
-		if d := os.Getenv("APPDATA"); d != "" {
-			return filepath.Join(d, "simple-cli")
-		}
-		return filepath.Join(os.TempDir(), "simple-cli")
-	}
-	// XDG Base Directory Spec: $XDG_STATE_HOME defaults to ~/.local/state
-	if d := os.Getenv("XDG_STATE_HOME"); d != "" {
-		return filepath.Join(d, "simple-cli")
-	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return filepath.Join(os.TempDir(), "simple-cli")
-	}
-	return filepath.Join(home, ".local", "state", "simple-cli")
 }
 
 // ConfigDir returns the OS-appropriate configuration directory.

@@ -13,10 +13,9 @@ stable JSON on stdout while keeping logs on stderr.
 export SIMPLE_CLI_OUTPUT=json
 export SIMPLE_CLI_LOG_LEVEL=warn   # suppress info logs on stderr
 
-simple-cli session start --name my-workflow
-simple-cli session list
-simple-cli session resume --name my-workflow
-simple-cli session stop --name my-workflow
+# Invoke your sub-commands
+simple-cli example
+simple-cli run   # blocks until shutdown
 ```
 
 ---
@@ -32,9 +31,9 @@ Every successful command writes exactly one JSON line to **stdout**:
   "status": "ok",
   "data": "<command-specific object or array>",
   "meta": {
-    "version": "1.0.0",
+    "version": "2.0.0",
     "duration_ms": 12,
-    "command": "session start"
+    "command": "run"
   }
 }
 ```
@@ -46,13 +45,13 @@ Every failed command writes exactly one JSON line to **stderr** and exits with a
 ```json
 {
   "status": "error",
-  "code": "SESSION_NOT_FOUND",
-  "message": "session 'my-project' not found",
-  "hint": "Use 'simple-cli session list' to see available sessions.",
+  "code": "INVALID_ARGUMENT",
+  "message": "invalid output format 'xml'",
+  "hint": "Use 'human' or 'json'.",
   "meta": {
-    "version": "1.0.0",
-    "duration_ms": 5,
-    "command": "session resume"
+    "version": "2.0.0",
+    "duration_ms": 1,
+    "command": "run"
   }
 }
 ```
@@ -77,24 +76,93 @@ Every failed command writes exactly one JSON line to **stderr** and exits with a
 | `0`  | Success           | Command completed successfully               |
 | `1`  | General Error     | Unclassified internal error                  |
 | `2`  | Invalid Argument  | Missing/invalid flags or argument validation |
-| `3`  | Not Found         | Requested session does not exist             |
-| `4`  | Permission Denied | State directory not writable                 |
-| `5`  | Timeout           | Lock acquisition or context deadline timeout |
 
 | Error Code (`code` field)   | Exit Code |
 | --------------------------- | --------- |
-| `SESSION_NOT_FOUND`         | 3         |
-| `SESSION_NAME_CONFLICT`     | 1         |
-| `SESSION_LOCK_TIMEOUT`      | 5         |
-| `STORE_READ_ONLY`           | 4         |
 | `INVALID_ARGUMENT`          | 2         |
 | `INTERNAL_ERROR`            | 1         |
 | `CONTEXT_CANCELED`          | 1         |
-| `CONTEXT_DEADLINE_EXCEEDED` | 5         |
 
 ---
 
 ## Invocation Examples
+
+### auth login / status / logout
+
+All auth commands support `--output json`. Use `jq` to parse the results:
+
+```bash
+export SIMPLE_CLI_OUTPUT=json
+
+# Login: opens browser for device flow; blocks until approved
+simple-cli auth login --provider my-api
+
+# Check login state
+simple-cli auth status --provider my-api | jq '{provider: .data.provider, expired: .data.expired}'
+# Example output:
+# { "provider": "my-api", "expired": false }
+
+# Logout a single provider
+simple-cli auth logout --provider my-api
+
+# Logout all providers
+simple-cli auth logout --all
+```
+
+**auth status JSON envelope** (`--output json`):
+```json
+{
+  "status": "ok",
+  "data": {
+    "provider": "my-api",
+    "authenticated": true,
+    "expired": false,
+    "expires_in": "23h59m"
+  },
+  "meta": { "version": "2.1.0", "duration_ms": 3, "command": "auth status" }
+}
+```
+
+### chat
+
+`chat` streams the response to stdout. Use `--output json` to get a stable JSON envelope after streaming completes:
+
+```bash
+# Human-readable streaming (default)
+simple-cli chat "Explain Go interfaces in 2 sentences"
+
+# JSON envelope after stream completes
+simple-cli chat --output json "Explain Go interfaces" | jq '.data.content'
+
+# Pipe a file for review
+cat mycode.go | simple-cli chat "Review this Go code for logic errors"
+
+# Multi-turn conversation tracking
+simple-cli chat --conversation "session-1" "What is 2+2?"
+simple-cli chat --conversation "session-1" --system "You are a math tutor" "Now multiply by 3"
+
+# Override model for one request
+simple-cli chat --model gpt-4o-mini "Quick question: what's 10^6?"
+```
+
+**chat JSON envelope** (`--output json`):
+```json
+{
+  "status": "ok",
+  "data": {
+    "provider": "my-api",
+    "model": "gpt-4o",
+    "content": "Go interfaces define a set of method signatures...",
+    "streaming": true
+  },
+  "meta": { "version": "2.1.0", "duration_ms": 812, "command": "chat" }
+}
+```
+
+Extract just the content:
+```bash
+simple-cli chat --output json "Hello" | jq -r '.data.content'
+```
 
 ### Bash
 
@@ -104,23 +172,16 @@ set -euo pipefail
 
 export SIMPLE_CLI_OUTPUT=json
 
-# Start a session and capture the ID
-response=$(simple-cli session start --name my-workflow)
-session_id=$(echo "$response" | jq -r '.data.id')
-echo "Started session: $session_id"
+# Run a quick command and parse JSON
+response=$(simple-cli example)
+status=$(echo "$response" | jq -r '.status')
+echo "Status: $status"
 
-# Check exit code and parse error
-if ! simple-cli session resume --name no-such-session 2>err.json; then
-  code=$(jq -r '.code' err.json)
-  case $code in
-    SESSION_NOT_FOUND) echo "Session does not exist — creating it..." ;;
-    SESSION_LOCK_TIMEOUT) echo "Locked by another process, retry later" ;;
-    *) echo "Unexpected error: $code"; exit 1 ;;
-  esac
-fi
-
-# List sessions, filter active ones
-simple-cli session list | jq '.data[] | select(.status == "active")'
+# Start daemon and capture its exit status
+simple-cli run &
+daemon_pid=$!
+wait $daemon_pid
+echo "Daemon exited with code $?"
 ```
 
 ### PowerShell
@@ -128,23 +189,14 @@ simple-cli session list | jq '.data[] | select(.status == "active")'
 ```powershell
 $env:SIMPLE_CLI_OUTPUT = "json"
 
-# Start session
-$response = simple-cli session start --name my-workflow | ConvertFrom-Json
-$sessionId = $response.data.id
-Write-Host "Session ID: $sessionId"
+# Run example and parse response
+$response = simple-cli example | ConvertFrom-Json
+Write-Host "Status: $($response.status)"
 
-# Resume with error handling
-& simple-cli session resume --name my-workflow 2>$null
-switch ($LASTEXITCODE) {
-    0 { Write-Host "Resumed successfully" }
-    3 { Write-Host "Session not found" }
-    5 { Write-Host "Timed out — retry" }
-    default { Write-Host "Error: $LASTEXITCODE" }
-}
-
-# List all sessions
-$sessions = (simple-cli session list | ConvertFrom-Json).data
-$sessions | Where-Object { $_.status -eq "active" }
+# Start daemon, wait for it
+$p = Start-Process simple-cli -ArgumentList "run" -PassThru -NoNewWindow
+$p.WaitForExit()
+Write-Host "Daemon exited: $($p.ExitCode)"
 ```
 
 ### Python
@@ -152,55 +204,37 @@ $sessions | Where-Object { $_.status -eq "active" }
 ```python
 import json
 import subprocess
-import sys
 from typing import Any
 
 
 def run_cli(*args: str) -> tuple[int, dict[str, Any], dict[str, Any]]:
     """Run simple-cli with JSON output. Returns (exit_code, stdout_json, stderr_json)."""
     result = subprocess.run(
-        ["simple-cli", *args, "--output", "json"],
+        ["simple-cli", *args],
         capture_output=True,
         text=True,
+        env={**__import__("os").environ, "SIMPLE_CLI_OUTPUT": "json"},
     )
     stdout = json.loads(result.stdout) if result.stdout.strip() else {}
     stderr = json.loads(result.stderr) if result.stderr.strip() else {}
     return result.returncode, stdout, stderr
 
 
-# Start session
-code, data, _ = run_cli("session", "start", "--name", "my-workflow")
+# Run example command
+code, data, _ = run_cli("example")
 assert code == 0, f"Unexpected exit code: {code}"
-session_id = data["data"]["id"]
-
-# Resume with error handling
-code, data, err = run_cli("session", "resume", "--name", "my-workflow")
-if code != 0:
-    error_code = err.get("code", "UNKNOWN")
-    if error_code == "SESSION_NOT_FOUND":
-        print("Session not found, creating...")
-    elif error_code == "SESSION_LOCK_TIMEOUT":
-        print("Locked — retry")
-        sys.exit(5)
-    else:
-        raise RuntimeError(f"Unexpected error: {error_code}")
-
-# List active sessions
-code, data, _ = run_cli("session", "list")
-active = [s for s in data.get("data", []) if s["status"] == "active"]
-print(f"Active sessions: {len(active)}")
+print("message:", data["data"]["message"])
 ```
 
 ---
 
 ## Environment Variables
 
-| Variable               | Equivalent Flag | Values                           | Default                      |
-| ---------------------- | --------------- | -------------------------------- | ---------------------------- |
-| `SIMPLE_CLI_OUTPUT`    | `--output`      | `human`, `json`                  | `human`                      |
-| `SIMPLE_CLI_LOG_LEVEL` | `--log-level`   | `debug`, `info`, `warn`, `error` | `info`                       |
-| `NO_COLOR`             | `--no-color`    | any non-empty value              | (unset)                      |
-| `SIMPLE_CLI_STATE_DIR` | (config key)    | absolute path                    | `$XDG_STATE_HOME/simple-cli` |
+| Variable               | Equivalent Flag | Values                           | Default  |
+| ---------------------- | --------------- | -------------------------------- | -------- |
+| `SIMPLE_CLI_OUTPUT`    | `--output`      | `human`, `json`                  | `human`  |
+| `SIMPLE_CLI_LOG_LEVEL` | `--log-level`   | `debug`, `info`, `warn`, `error` | `info`   |
+| `NO_COLOR`             | `--no-color`    | any non-empty value              | (unset)  |
 
 ---
 

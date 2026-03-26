@@ -21,7 +21,7 @@
 
 !define APPNAME     "simple-cli"
 !define APPVERSION  "1.0.0"
-!define PUBLISHER   "your-org"
+!define PUBLISHER   "binpqh"
 !define BINARY      "simple-cli.exe"
 !define UNINST_KEY  "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}"
 

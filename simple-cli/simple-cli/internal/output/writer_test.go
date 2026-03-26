@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/your-org/simple-cli/internal/output"
+	"github.com/binpqh/simple-cli/internal/output"
 )
 
 func TestWriterWriteOut(t *testing.T) {

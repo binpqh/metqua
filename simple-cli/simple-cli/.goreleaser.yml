@@ -32,9 +32,9 @@ builds:
         goarch: arm64
     ldflags:
       - -s -w
-      - -X github.com/your-org/simple-cli/pkg/version.Version={{.Version}}
-      - -X github.com/your-org/simple-cli/pkg/version.Commit={{.Commit}}
-      - -X github.com/your-org/simple-cli/pkg/version.BuildDate={{.Date}}
+      - -X github.com/binpqh/simple-cli/pkg/version.Version={{.Version}}
+      - -X github.com/binpqh/simple-cli/pkg/version.Commit={{.Commit}}
+      - -X github.com/binpqh/simple-cli/pkg/version.BuildDate={{.Date}}
     mod_timestamp: "{{ .CommitTimestamp }}"
 
 archives:
@@ -59,9 +59,9 @@ checksum:
 nfpms:
   - id: packages
     package_name: simple-cli
-    vendor: your-org
-    homepage: https://github.com/your-org/simple-cli
-    maintainer: your-org <hello@your-org.dev>
+    vendor: binpqh
+    homepage: https://github.com/binpqh/simple-cli
+    maintainer: binpqh <hello@binpqh.dev>
     description: Cross-platform CLI for managing long-life sessions.
     license: MIT
     formats:
@@ -98,7 +98,7 @@ changelog:
 
 release:
   github:
-    owner: your-org
+    owner: binpqh
     name: simple-cli
   extra_files:
     - glob: "installer/windows/*.exe"
@@ -109,9 +109,9 @@ release:
 brews:
   - name: simple-cli
     repository:
-      owner: your-org
+      owner: binpqh
       name: homebrew-simple-cli
-    homepage: https://github.com/your-org/simple-cli
+    homepage: https://github.com/binpqh/simple-cli
     description: Cross-platform CLI for managing long-life sessions.
     license: MIT
     install: |

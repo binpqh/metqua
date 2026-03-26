@@ -1,6 +1,6 @@
 # simple-cli Development Guidelines
 
-Auto-generated from feature plan `001-cli-long-life-session`. Last updated: 2026-03-23
+Auto-generated from feature plan `001-cli-long-life-session`. Last updated: 2026-03-24
 
 ## Active Technologies
 
