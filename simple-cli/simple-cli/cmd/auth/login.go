@@ -55,7 +55,7 @@ func newLoginCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if err := config.ValidateProviderConfig(pc); err != nil {
+			if err := config.ValidateProviderConfig(pc, cfg.Insecure); err != nil {
 				return err
 			}
 			// resolve adapter via registry (supports custom adapters)

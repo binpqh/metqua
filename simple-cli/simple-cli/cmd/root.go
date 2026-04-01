@@ -4,9 +4,11 @@ package cmd
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -58,6 +60,7 @@ Use --output json for machine-readable output suitable for AI agent workflows.`,
 		_ = v.BindEnv("output", "SIMPLE_CLI_OUTPUT")
 		_ = v.BindEnv("log_level", "SIMPLE_CLI_LOG_LEVEL")
 		_ = v.BindEnv("no_color", "NO_COLOR")
+		_ = v.BindEnv("insecure", "SIMPLE_CLI_INSECURE")
 		v.AutomaticEnv()
 
 		// Bind persistent flags into Viper.
@@ -65,6 +68,7 @@ Use --output json for machine-readable output suitable for AI agent workflows.`,
 		_ = v.BindPFlag("log_level", cmd.Root().PersistentFlags().Lookup("log-level"))
 		_ = v.BindPFlag("no_color", cmd.Root().PersistentFlags().Lookup("no-color"))
 		_ = v.BindPFlag("quiet", cmd.Root().PersistentFlags().Lookup("quiet"))
+		_ = v.BindPFlag("insecure", cmd.Root().PersistentFlags().Lookup("insecure"))
 
 		var err error
 		cfg, err = config.Load(v)
@@ -96,6 +100,16 @@ Use --output json for machine-readable output suitable for AI agent workflows.`,
 		// Store resolved config in context so sub-commands can read it.
 		cmd.SetContext(context.WithValue(cmd.Context(), config.CtxKey{}, cfg))
 
+		// When --insecure / SIMPLE_CLI_INSECURE is set, disable TLS verification
+		// for the default HTTP client. FOR DEVELOPMENT USE ONLY.
+		if cfg.Insecure {
+			slog.Warn("TLS verification disabled (--insecure). Do not use in production.")
+			//nolint:gosec
+			http.DefaultTransport = &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			}
+		}
+
 		return nil
 	},
 }
@@ -121,6 +135,7 @@ func init() {
 	pf.String("log-level", "info", "Log verbosity: debug, info, warn, error (env: SIMPLE_CLI_LOG_LEVEL)")
 	pf.Bool("no-color", false, "Suppress ANSI escape codes (env: NO_COLOR)")
 	pf.BoolP("quiet", "q", false, "Suppress all informational output")
+	pf.Bool("insecure", false, "Skip TLS certificate verification — for local dev/testing only (env: SIMPLE_CLI_INSECURE)")
 
 	rootCmd.Version = version.String()
 	rootCmd.SetVersionTemplate("{{.Version}}\n")

@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -18,10 +19,14 @@ func newLogoutCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			cfg := ctx.Value(config.CtxKey{}).(*config.Config)
+			store := tokenstore.NewFileTokenStore(tokenstore.PathForConfigDir(config.ConfigDir()))
 			if all {
-				// delete all providers: remove tokens file
-				store := tokenstore.NewFileTokenStore(tokenstore.PathForConfigDir(config.ConfigDir()))
-				_ = store.Delete(ctx, providerName) // best-effort placeholder
+				_ = store.Delete(ctx, providerName)
+				if cfg.Output == "json" {
+					return json.NewEncoder(cmd.OutOrStdout()).Encode(map[string]interface{}{
+						"provider": "all", "success": true, "message": "Logged out (all providers)",
+					})
+				}
 				fmt.Fprintln(cmd.OutOrStdout(), "✓  Logged out (all providers)")
 				return nil
 			}
@@ -29,9 +34,13 @@ func newLogoutCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			_ = config.ValidateProviderConfig(pc)
-			store := tokenstore.NewFileTokenStore(tokenstore.PathForConfigDir(config.ConfigDir()))
+			_ = config.ValidateProviderConfig(pc, cfg.Insecure)
 			_ = store.Delete(ctx, providerName)
+			if cfg.Output == "json" {
+				return json.NewEncoder(cmd.OutOrStdout()).Encode(map[string]interface{}{
+					"provider": providerName, "success": true, "message": "Logged out successfully",
+				})
+			}
 			fmt.Fprintf(cmd.OutOrStdout(), "✓  Logged out from %s\n", providerName)
 			return nil
 		},

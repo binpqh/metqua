@@ -27,6 +27,9 @@ type Config struct {
 	// Provider configuration (v2.1.0)
 	DefaultProvider string                    `mapstructure:"default_provider"`
 	Providers       map[string]ProviderConfig `mapstructure:"providers"`
+	// Insecure disables HTTPS enforcement and TLS cert verification.
+	// FOR DEVELOPMENT USE ONLY — never set in production.
+	Insecure bool `mapstructure:"insecure"`
 }
 
 // ProviderConfig holds all settings for one OAuth + Chat provider.
@@ -62,7 +65,9 @@ func (c *Config) ActiveProvider(name string) (*ProviderConfig, error) {
 func lower(s string) string { return string([]byte(s)) }
 
 // ValidateProviderConfig performs basic validation on a provider config.
-func ValidateProviderConfig(pc *ProviderConfig) error {
+// Pass insecure=true to allow plain http:// endpoints (dev/test only).
+func ValidateProviderConfig(pc *ProviderConfig, insecure ...bool) error {
+	allowHTTP := len(insecure) > 0 && insecure[0]
 	if pc == nil {
 		return errors.New("provider config is nil")
 	}
@@ -81,7 +86,10 @@ func ValidateProviderConfig(pc *ProviderConfig) error {
 			return fmt.Errorf("%s is required", u.name)
 		}
 		parsed, err := url.Parse(u.raw)
-		if err != nil || parsed.Scheme != "https" {
+		if err != nil || (parsed.Scheme != "https" && parsed.Scheme != "http") {
+			return fmt.Errorf("%s must be a valid URL", u.name)
+		}
+		if parsed.Scheme != "https" && !allowHTTP {
 			return fmt.Errorf("%s must be a valid https URL", u.name)
 		}
 	}
