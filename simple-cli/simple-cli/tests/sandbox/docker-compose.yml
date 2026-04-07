@@ -1,0 +1,37 @@
+version: "3.8"
+
+# x-sandbox-common defines shared build args for all Linux test containers.
+x-sandbox-common: &sandbox-common
+  build:
+    args:
+      BINARY_PATH: ./dist/simple-cli
+
+services:
+  ubuntu:
+    <<: *sandbox-common
+    build:
+      context: ../..
+      dockerfile: tests/sandbox/docker/ubuntu-22.04/Dockerfile
+    command: ["simple-cli", "--version"]
+
+  debian:
+    <<: *sandbox-common
+    build:
+      context: ../..
+      dockerfile: tests/sandbox/docker/debian-12/Dockerfile
+    command: ["simple-cli", "--version"]
+
+  alpine:
+    <<: *sandbox-common
+    build:
+      context: ../..
+      dockerfile: tests/sandbox/docker/alpine-3.19/Dockerfile
+    command: ["simple-cli", "--version"]
+
+  # Windows container requires a Windows CI runner with process isolation.
+  # Enable by unsetting SKIP_WINDOWS_SANDBOX.
+  # windows:
+  #   build:
+  #     context: ../..
+  #     dockerfile: tests/sandbox/docker/windows-ltsc/Dockerfile
+  #   command: ["simple-cli", "--version"]

@@ -1,0 +1,7 @@
+﻿services:
+  copichat:
+    image: copichat
+    build:
+      context: .
+      dockerfile: Dockerfile
+

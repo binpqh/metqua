@@ -1,0 +1,12 @@
+# Simple CLI ignores
+tokens.json
+*.log
+dist/
+tmp_
+coverage
+*.exe
+*.dll
+*.so
+.DS_Store
+/.vscode/
+.idea/
