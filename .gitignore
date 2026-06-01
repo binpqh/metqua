@@ -207,3 +207,8 @@ marimo/_lsp/
 __marimo__/
 simple-rag/.idea/*
 SimpleRAG/.idea/*
+evaluate-trading-xau-usd/data/*
+evaluate-trading-xau-usd/results/*
+evaluate-trading-xau-usd/results_experiments/*
+evaluate-trading-xau-usd/results_grid/*
+evaluate-trading-xau-usd/results_user/*

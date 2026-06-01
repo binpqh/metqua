@@ -1,0 +1,32 @@
+{
+  "scenarios": [
+    {
+      "name": "buy_oversold_lt20",
+      "rsi_condition": "<20",
+      "command": "BUY",
+      "stop_loss_pct": 0.003,
+      "take_profit_pct": 0.006
+    },
+    {
+      "name": "sell_overbought_gt70",
+      "rsi_condition": ">70",
+      "command": "SELL",
+      "stop_loss_pct": 0.003,
+      "take_profit_pct": 0.006
+    },
+    {
+      "name": "buy_range_15_20",
+      "rsi_condition": "15-20",
+      "command": "BUY",
+      "stop_loss_pct": 0.002,
+      "take_profit_pct": 0.004
+    },
+    {
+      "name": "buy_range_40_60_demo",
+      "rsi_condition": "40-60",
+      "command": "BUY",
+      "stop_loss_pct": 0.001,
+      "take_profit_pct": 0.0015
+    }
+  ]
+}
